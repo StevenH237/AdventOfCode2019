@@ -13,13 +13,30 @@ public static class Program
       which = Console.ReadLine().ToLowerInvariant();
     }
 
-    Type dayType = Type.GetType($"Day{which}");
+    Type dayType = null;
+
+    if (which == "latest")
+    {
+      foreach (int i in Enumerable.Range(1, 25).Reverse())
+      {
+        which = i.ToString();
+        dayType = Type.GetType($"Day{i}");
+        if (dayType != null) break;
+      }
+      Console.WriteLine($"Latest requested - Day {which} selected.");
+    }
+    else
+    {
+      dayType = Type.GetType($"Day{which}");
+    }
 
     if (dayType == null)
     {
       Console.WriteLine("This day hasn't been written yet!");
       return;
     }
+
+    Console.WriteLine(Directory.GetCurrentDirectory());
 
     if (!Directory.Exists($"./data/day{which}"))
     {
