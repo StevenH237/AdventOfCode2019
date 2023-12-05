@@ -6,5 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Nixill" Version="0.9.4" />
+  </ItemGroup>
 
 </Project>
