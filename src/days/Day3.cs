@@ -41,13 +41,29 @@ public class Day3Result
     Map(lines[0], Path1);
     Map(lines[1], Path2);
 
-    Part1Result = Path1
-      .Intersect(Path2)
+    var intersections = Path1.Intersect(Path2);
+
+    Part1Result = intersections
       .Select(c => Math.Abs(c.X) + Math.Abs(c.Y))
       .Order()
       .First()
       .ToString();
-    Part2Result = "";
+    Part2Result = intersections
+      .Select(c => Path1
+          .Select((p1, i) => (X: p1.X, Y: p1.Y, Steps: i + 1))
+          .Where(p1 => p1.X == c.X && p1.Y == c.Y)
+          .Select(p1 => p1.Steps)
+          .Order()
+          .First()
+        + Path2
+          .Select((p2, i) => (X: p2.X, Y: p2.Y, Steps: i + 1))
+          .Where(p2 => p2.X == c.X && p2.Y == c.Y)
+          .Select(p2 => p2.Steps)
+          .Order()
+          .First()
+      ).Order()
+      .First()
+      .ToString();
   }
 
   static Dictionary<char, (int dX, int dY)> Moves = new()
