@@ -6,6 +6,14 @@ public class ICProgram
   // Initial state of memory, not readable except by resetting.
   List<int> OrigMemory;
 
+  // List of outputs (with addresses)
+  List<(int Where, int What)> Outputs = new();
+
+  /// <summary>
+  ///   Whether or not the program is in debug mode.
+  /// </summary>
+  public bool Debug;
+
   /// <summary>
   /// The current instruction pointer location.
   /// </summary>
@@ -32,20 +40,22 @@ public class ICProgram
   /// Creates a new program.
   /// </summary>
   /// <param name="input">The initial memory.</param>
-  public ICProgram(IEnumerable<int> input)
+  public ICProgram(IEnumerable<int> input, bool debug = false)
   {
     OrigMemory = new(input);
     Memory = new(OrigMemory);
+    Debug = debug;
   }
 
   /// <summary>
   /// Creates a new program with text input.
   /// </summary>
   /// <param name="input">The initial memory (as text).</param>
-  public ICProgram(string input)
+  public ICProgram(string input, bool debug = false)
   {
     OrigMemory = new(input.Split(",").Select(int.Parse));
     Memory = new(OrigMemory);
+    Debug = debug;
   }
 
   /// <summary>
@@ -54,6 +64,13 @@ public class ICProgram
   /// </summary>
   /// <returns>The number at that position.</returns>
   public int GetNext() => Memory[Pointer++];
+
+  /// <summary>
+  /// Gets the position of the Pointer and the number at that position,
+  /// then increments the Pointer.
+  /// </summary>
+  /// <returns>A tuple containing the described values.</returns>
+  public (int Where, int What) GetNextWithPos() => (Pointer, Memory[Pointer++]);
 
   /// <summary>
   ///   Evaluates an opcode at the current Pointer.
@@ -68,10 +85,10 @@ public class ICProgram
   {
     if (Halted)
       throw new InvalidOperationException("The program has halted!");
-    int whichCode = GetNext();
-    if (!Codes.ContainsKey(whichCode))
-      throw new ArgumentException($"The opcode {whichCode} does not exist.");
-    Codes[whichCode](this);
+    (int where, int whichCode) = GetNextWithPos();
+    ICOpcode code = ICOpcode.Get(whichCode);
+    ICOpcodeCall call = new(this, code, whichCode, where);
+    code.Method(call);
   }
 
   /// <summary>
@@ -98,31 +115,14 @@ public class ICProgram
     Memory = new(OrigMemory);
     Pointer = 0;
     Halted = false;
+    Outputs = new();
   }
 
-  static Dictionary<int, Action<ICProgram>> Codes = new()
+  /// <summary>
+  ///   Gets a read-only list of outputs.
+  /// </summary>
+  public IReadOnlyCollection<(int Where, int What)> GetOutputs()
   {
-    [1] = (prog) =>
-    {
-      int leftPointer = prog.GetNext();
-      int left = prog.Memory[leftPointer];
-      int rightPointer = prog.GetNext();
-      int right = prog.Memory[rightPointer];
-      int resultPointer = prog.GetNext();
-      prog.Memory[resultPointer] = left + right;
-    },
-    [2] = (prog) =>
-    {
-      int leftPointer = prog.GetNext();
-      int left = prog.Memory[leftPointer];
-      int rightPointer = prog.GetNext();
-      int right = prog.Memory[rightPointer];
-      int resultPointer = prog.GetNext();
-      prog.Memory[resultPointer] = left * right;
-    },
-    [99] = (prog) =>
-    {
-      prog.Halted = true;
-    }
-  };
+    return Outputs.AsReadOnly();
+  }
 }

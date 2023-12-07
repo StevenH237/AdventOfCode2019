@@ -44,12 +44,19 @@ public static class Program
       return;
     }
 
+    bool shouldTest = true;
+    FieldInfo skipTestField = dayType.GetField("SkipTests");
+
+    if (skipTestField != null && skipTestField.IsStatic
+          && skipTestField.FieldType == typeof(bool) && (bool)skipTestField.GetValue(null))
+      shouldTest = false;
+
     MethodInfo part1Method = dayType.GetMethod("Part1", new Type[] { typeof(string), typeof(StreamReader) });
     if (part1Method != null)
     {
       var del1 = part1Method.CreateDelegate<Func<string, StreamReader, string>>();
       Console.WriteLine("Running part 1...");
-      if (RunTests(which, 1, del1))
+      if (!shouldTest || RunTests(which, 1, del1))
       {
         RunCode(which, 1, del1);
       }
@@ -61,7 +68,7 @@ public static class Program
     {
       var del2 = part2Method.CreateDelegate<Func<string, StreamReader, string>>();
       Console.WriteLine("Running part 2...");
-      if (RunTests(which, 2, del2))
+      if (!shouldTest || RunTests(which, 2, del2))
       {
         RunCode(which, 2, del2);
       }
