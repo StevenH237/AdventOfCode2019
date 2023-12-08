@@ -62,17 +62,26 @@ public class ICProgram
   }
 
   /// <summary>
-  /// Gets the number at the position indicated by the Pointer, then
-  /// increments the Pointer.
+  ///   Gets the number at the position indicated by the Pointer, then
+  ///   increments the Pointer.
   /// </summary>
   /// <returns>The number at that position.</returns>
   public int GetNext() => Memory[Pointer++];
 
   /// <summary>
-  /// Gets the position of the Pointer and the number at that position,
-  /// then increments the Pointer.
+  ///   Gets the number at the position indicated by the Pointer WITHOUT
+  ///   incrementing the Pointer.
   /// </summary>
-  /// <returns>A tuple containing the described values.</returns>
+  /// <returns>The number at that position.</returns>
+  public int GetUpcoming() => Memory[Pointer];
+
+  /// <summary>
+  ///   Gets the position of the Pointer and the number at that position,
+  ///   then increments the Pointer.
+  /// </summary>
+  /// <returns>
+  ///   A tuple containing the described values, position first.
+  /// </returns>
   public (int Where, int What) GetNextWithPos() => (Pointer, Memory[Pointer++]);
 
   /// <summary>
@@ -135,6 +144,36 @@ public class ICProgram
     }
 
     throw new InvalidDataException("The program halted without an output!");
+  }
+
+  /// <summary>
+  ///   Evaluates opcodes until the next to be processed is an input and
+  ///   none are in the queue. Pauses before evaluating that input call.
+  /// </summary>
+  /// <remarks>
+  ///   This call will not cause the ICProgram to move forward at all if
+  ///   it is called while the ICProgram is already awaiting input and no
+  ///   inputs have been queued since. Additionally, while inputs are
+  ///   queued, the ICProgram's execution will continue.
+  /// </remarks>
+  /// <returns>
+  ///   True if the program paused awaiting input. False if the program
+  ///   halted.
+  /// </returns>
+  public bool EvalToNextInput()
+  {
+    if (Halted)
+      throw new InvalidOperationException("The program has halted!");
+
+    while (!Halted)
+    {
+      int nextCode = GetUpcoming();
+      ICOpcode code = ICOpcode.Get(nextCode);
+      if (code.ID == 3 && QueuedInputs.Count == 0) return true;
+      Eval();
+    }
+
+    return false;
   }
 
   /// <summary>
