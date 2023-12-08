@@ -1,0 +1,13 @@
+{
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "StevenH237/AoC2019Data": {
+          "permissions": {
+            "contents": "write"
+          }
+        }
+      }
+    }
+  }
+}
