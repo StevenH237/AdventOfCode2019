@@ -46,27 +46,16 @@ public class ICOpcode
     }),
     [3] = new ICOpcode(3, "IN", (call) =>
     {
-      Console.Write($"Integer requested at position {call.Position}: ");
-      string input = "";
-      while (input == "")
-      {
-        input = Console.ReadLine();
-        if (int.TryParse(input, out int value))
-        {
-          int address = call.GetAddress();
-          call.Debug($"Written to position {address}");
-          call.Program[address] = value;
-        }
-        else
-        {
-          input = "";
-          Console.Write($"That's not an integer, try again: ");
-        }
-      }
+      int input = call.Program.GetInput(call.Position);
+      int address = call.GetAddress();
+      call.Program[address] = input;
+      call.Debug($"Value {input} written to position {address}");
     }),
     [4] = new ICOpcode(4, "OUT", (call) =>
     {
-      Console.WriteLine($"Integer output from position {call.Position}: {call.GetParameter()}");
+      int value = call.GetParameter();
+      call.Debug($"{value}");
+      call.Program.Outputs.Add((call.Position, value));
     }),
     [5] = new ICOpcode(5, "JUMP-TRUE", (call) =>
     {

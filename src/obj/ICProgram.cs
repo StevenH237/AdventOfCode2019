@@ -7,7 +7,10 @@ public class ICProgram
   List<int> OrigMemory;
 
   // List of outputs (with addresses)
-  List<(int Where, int What)> Outputs = new();
+  internal List<(int Where, int What)> Outputs = new();
+
+  // List of queued inputs
+  List<int> QueuedInputs = new();
 
   /// <summary>
   ///   Whether or not the program is in debug mode.
@@ -75,13 +78,16 @@ public class ICProgram
   /// <summary>
   ///   Evaluates an opcode at the current Pointer.
   /// </summary>
+  /// <return>
+  ///   The called opcode.
+  /// </return>
   /// <exception cref="InvalidOperationException">
   ///   If the program has Halted.
   /// </exception>
   /// <exception cref="ArgumentException">
   ///   If the Opcode doesn't exist.
   /// </exception>
-  public void Eval()
+  public ICOpcode Eval()
   {
     if (Halted)
       throw new InvalidOperationException("The program has halted!");
@@ -89,6 +95,7 @@ public class ICProgram
     ICOpcode code = ICOpcode.Get(whichCode);
     ICOpcodeCall call = new(this, code, whichCode, where);
     code.Method(call);
+    return code;
   }
 
   /// <summary>
@@ -108,6 +115,89 @@ public class ICProgram
   }
 
   /// <summary>
+  ///   Evaluates opcodes until an opcode 4 is processed.
+  /// </summary>
+  /// <returns>The output invoked by that opcode 4.</returns>
+  /// <exception cref="InvalidOperationException">The program has already halted before this call.</exception>
+  /// <exception cref="InvalidDataException">The program halts without an additional output.</exception>
+  public (int Where, int What) EvalToNextOutput()
+  {
+    if (Halted)
+      throw new InvalidOperationException("The program has halted!");
+
+    while (!Halted)
+    {
+      ICOpcode code = Eval();
+      if (code.ID == 4) // Output
+      {
+        return GetLastOutput();
+      }
+    }
+
+    throw new InvalidDataException("The program halted without an output!");
+  }
+
+  /// <summary>
+  ///   Returns the most recent output saved to the table.
+  /// </summary>
+  /// <returns>The most recent output.</returns>
+  /// <exception cref="InvalidOperationException">No outputs yet!</exception>
+  public (int Where, int What) GetLastOutput()
+  {
+    if (Outputs.Count == 0)
+      throw new InvalidOperationException("No outputs yet!");
+
+    return Outputs[Outputs.Count - 1];
+  }
+
+  /// <summary>
+  ///   Add a single input to queue.
+  /// </summary>
+  /// <param name="input">The input.</param>
+  public void QueueInput(int input)
+  {
+    QueuedInputs.Add(input);
+  }
+
+  /// <summary>
+  ///   Add multiple inputs to queue.
+  /// </summary>
+  /// <param name="inputs">The inputs.</param>
+  public void QueueInputs(IEnumerable<int> inputs)
+  {
+    QueuedInputs.AddRange(inputs);
+  }
+
+  // Returns the next queued input, or gets one from console if nothing queued.
+  internal int GetInput(int pos)
+  {
+    if (QueuedInputs.Count > 0)
+    {
+      int value = QueuedInputs[0];
+      QueuedInputs.RemoveAt(0);
+      return value;
+    }
+
+    Console.Write($"Integer requested at position {pos}: ");
+    string input = "";
+    while (input == "")
+    {
+      input = Console.ReadLine();
+      if (int.TryParse(input, out int value))
+      {
+        return value;
+      }
+      else
+      {
+        input = "";
+        Console.Write($"That's not an integer, try again: ");
+      }
+    }
+
+    throw new InvalidDataException("How did you even get this error?");
+  }
+
+  /// <summary>
   ///   Resets the program to its original state.
   /// </summary>
   public void Reset()
@@ -116,6 +206,7 @@ public class ICProgram
     Pointer = 0;
     Halted = false;
     Outputs = new();
+    QueuedInputs = new();
   }
 
   /// <summary>
