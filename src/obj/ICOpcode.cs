@@ -13,12 +13,12 @@ public class ICOpcode
     Name = name;
   }
 
-  public static ICOpcode Get(int id)
+  public static ICOpcode Get(long id)
   {
-    id %= 100;
+    int intID = (int)(id % 100);
 
-    if (Codes.ContainsKey(id)) return Codes[id];
-    else throw new InvalidDataException($"Opcode {id} doesn't exist!");
+    if (Codes.ContainsKey(intID)) return Codes[intID];
+    else throw new InvalidDataException($"Opcode {intID} doesn't exist!");
   }
 
   static Dictionary<int, ICOpcode> Codes = new()
@@ -30,44 +30,44 @@ public class ICOpcode
     }),
     [1] = new ICOpcode(1, "ADD", (call) =>
     {
-      int left = call.GetParameter();
-      int right = call.GetParameter();
+      long left = call.GetParameter();
+      long right = call.GetParameter();
       int storeAt = call.GetAddress();
       call.Debug($"{left} + {right} = {left + right} (→ {storeAt})");
       call.Program[storeAt] = left + right;
     }),
     [2] = new ICOpcode(2, "MUL", (call) =>
     {
-      int left = call.GetParameter();
-      int right = call.GetParameter();
+      long left = call.GetParameter();
+      long right = call.GetParameter();
       int storeAt = call.GetAddress();
       call.Debug($"{left} × {right} = {left * right} (→ {storeAt})");
       call.Program[storeAt] = left * right;
     }),
     [3] = new ICOpcode(3, "IN", (call) =>
     {
-      int input = call.Program.GetInput(call.Position);
+      long input = call.Program.GetInput(call.Position);
       int address = call.GetAddress();
       call.Program[address] = input;
       call.Debug($"Value {input} written to position {address}");
     }),
     [4] = new ICOpcode(4, "OUT", (call) =>
     {
-      int value = call.GetParameter();
+      long value = call.GetParameter();
       call.Debug($"{value}");
       call.Program.Outputs.Add((call.Position, value));
     }),
     [5] = new ICOpcode(5, "JUMP-TRUE", (call) =>
     {
-      int test = call.GetParameter();
-      int target = call.GetParameter();
+      long test = call.GetParameter();
+      long target = call.GetParameter();
 
       call.Debug($"Test value: {test}");
 
       if (test != 0)
       {
         call.Debug($"Jumping to {target}");
-        call.Program.Pointer = target;
+        call.Program.Pointer = (int)target;
       }
       else
       {
@@ -76,15 +76,15 @@ public class ICOpcode
     }),
     [6] = new ICOpcode(6, "JUMP-FALSE", (call) =>
     {
-      int test = call.GetParameter();
-      int target = call.GetParameter();
+      long test = call.GetParameter();
+      long target = call.GetParameter();
 
       call.Debug($"Test value: {test}");
 
       if (test == 0)
       {
         call.Debug($"Jumping to {target}");
-        call.Program.Pointer = target;
+        call.Program.Pointer = (int)target;
       }
       else
       {
@@ -93,8 +93,8 @@ public class ICOpcode
     }),
     [7] = new ICOpcode(7, "LT", (call) =>
     {
-      int left = call.GetParameter();
-      int right = call.GetParameter();
+      long left = call.GetParameter();
+      long right = call.GetParameter();
       int target = call.GetAddress();
 
       call.Debug($"{left} < {right} → {left < right} (→ {target})");
@@ -102,8 +102,8 @@ public class ICOpcode
     }),
     [8] = new ICOpcode(8, "EQ", (call) =>
     {
-      int left = call.GetParameter();
-      int right = call.GetParameter();
+      long left = call.GetParameter();
+      long right = call.GetParameter();
       int target = call.GetAddress();
 
       call.Debug($"{left} == {right} → {left == right} (→ {target})");
@@ -116,12 +116,12 @@ public class ICOpcodeCall
 {
   public readonly ICProgram Program;
   public readonly ICOpcode Code;
-  public readonly int CalledAs;
+  public readonly long CalledAs;
   public readonly int Position;
 
-  int ParameterModes;
+  long ParameterModes;
 
-  public ICOpcodeCall(ICProgram program, ICOpcode code, int calledAs, int position)
+  public ICOpcodeCall(ICProgram program, ICOpcode code, long calledAs, int position)
   {
     Program = program;
     Code = code;
@@ -133,21 +133,21 @@ public class ICOpcodeCall
 
   int GetParameterMode()
   {
-    int mode = ParameterModes % 10;
+    int mode = (int)(ParameterModes % 10);
     ParameterModes /= 10;
     return mode;
   }
 
-  public int GetParameter()
+  public long GetParameter()
   {
     int mode = GetParameterMode();
 
-    int nextValue = Program.GetNext();
+    long nextValue = Program.GetNext();
 
     switch (mode)
     {
       case 0:
-        nextValue = Program[nextValue];
+        nextValue = Program[(int)nextValue];
         break;
       case 1:
         break;
@@ -162,10 +162,13 @@ public class ICOpcodeCall
   {
     int mode = GetParameterMode();
 
-    if (mode != 0)
-      throw new InvalidOperationException($"Attempted to get an address in non-address parameter mode.");
-
-    return Program.GetNext();
+    switch (mode)
+    {
+      case 0:
+        return (int)Program.GetNext();
+      default:
+        throw new InvalidOperationException($"Attempted to get an address in non-address parameter mode.");
+    }
   }
 
   public void Debug(string message)

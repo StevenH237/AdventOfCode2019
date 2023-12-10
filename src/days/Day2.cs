@@ -32,7 +32,7 @@ public class Day2
         program[1] = noun;
         program[2] = verb;
 
-        int result = program.EvalAll();
+        long result = program.EvalAll();
 
         if (result == 19690720) return (100 * noun + verb).ToString();
       }

@@ -8,11 +8,11 @@ public static class Day7
 
     ICProgram amp = new(prog);
 
-    int highestResult = 0;
+    long highestResult = 0;
 
     foreach (IEnumerable<int> test in Enumerable.Range(0, 5).Permutations())
     {
-      int result = 0;
+      long result = 0;
       foreach (int value in test)
       {
         amp.Reset();
@@ -32,12 +32,12 @@ public static class Day7
     string prog = input.ReadToEnd();
 
     List<ICProgram> amps = EnumerableUtils.Repeat(() => new ICProgram(prog), 5).ToList();
-    int highestResult = 0;
+    long highestResult = 0;
 
     // Do all of the following for every possible order
     foreach (IEnumerable<int> test in Enumerable.Range(5, 5).Permutations())
     {
-      int result = 0;
+      long result = 0;
       bool running = true;
 
       // Reset the amps

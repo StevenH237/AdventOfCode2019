@@ -1,16 +1,16 @@
 public class ICProgram
 {
-  // State of memory, readable but not writable through this[int].
-  List<int> Memory;
+  // State of memory, readable and writable through this[int].
+  List<long> Memory;
 
   // Initial state of memory, not readable except by resetting.
-  List<int> OrigMemory;
+  List<long> OrigMemory;
 
   // List of outputs (with addresses)
-  internal List<(int Where, int What)> Outputs = new();
+  internal List<(int Where, long What)> Outputs = new();
 
   // List of queued inputs
-  List<int> QueuedInputs = new();
+  List<long> QueuedInputs = new();
 
   /// <summary>
   ///   Whether or not the program is in debug mode.
@@ -33,7 +33,7 @@ public class ICProgram
   /// </summary>
   /// <param name="index">The index to retrieve</param>
   /// <returns>The program's value</returns>
-  public int this[int index]
+  public long this[int index]
   {
     get => Memory[index];
     internal set => Memory[index] = value;
@@ -43,7 +43,7 @@ public class ICProgram
   /// Creates a new program.
   /// </summary>
   /// <param name="input">The initial memory.</param>
-  public ICProgram(IEnumerable<int> input, bool debug = false)
+  public ICProgram(IEnumerable<long> input, bool debug = false)
   {
     OrigMemory = new(input);
     Memory = new(OrigMemory);
@@ -56,7 +56,7 @@ public class ICProgram
   /// <param name="input">The initial memory (as text).</param>
   public ICProgram(string input, bool debug = false)
   {
-    OrigMemory = new(input.Split(",").Select(int.Parse));
+    OrigMemory = new(input.Split(",").Select(long.Parse));
     Memory = new(OrigMemory);
     Debug = debug;
   }
@@ -66,14 +66,14 @@ public class ICProgram
   ///   increments the Pointer.
   /// </summary>
   /// <returns>The number at that position.</returns>
-  public int GetNext() => Memory[Pointer++];
+  public long GetNext() => Memory[Pointer++];
 
   /// <summary>
   ///   Gets the number at the position indicated by the Pointer WITHOUT
   ///   incrementing the Pointer.
   /// </summary>
   /// <returns>The number at that position.</returns>
-  public int GetUpcoming() => Memory[Pointer];
+  public long GetUpcoming() => Memory[Pointer];
 
   /// <summary>
   ///   Gets the position of the Pointer and the number at that position,
@@ -82,7 +82,7 @@ public class ICProgram
   /// <returns>
   ///   A tuple containing the described values, position first.
   /// </returns>
-  public (int Where, int What) GetNextWithPos() => (Pointer, Memory[Pointer++]);
+  public (int Where, long What) GetNextWithPos() => (Pointer, Memory[Pointer++]);
 
   /// <summary>
   ///   Evaluates an opcode at the current Pointer.
@@ -100,7 +100,7 @@ public class ICProgram
   {
     if (Halted)
       throw new InvalidOperationException("The program has halted!");
-    (int where, int whichCode) = GetNextWithPos();
+    (int where, long whichCode) = GetNextWithPos();
     ICOpcode code = ICOpcode.Get(whichCode);
     ICOpcodeCall call = new(this, code, whichCode, where);
     code.Method(call);
@@ -111,7 +111,7 @@ public class ICProgram
   ///   Evaluates all opcodes until the program halts.
   /// </summary>
   /// <return>The value at address 0 once the program halts.</return>
-  public int EvalAll()
+  public long EvalAll()
   {
     if (Halted)
       throw new InvalidOperationException("The program has halted!");
@@ -129,7 +129,7 @@ public class ICProgram
   /// <returns>The output invoked by that opcode 4.</returns>
   /// <exception cref="InvalidOperationException">The program has already halted before this call.</exception>
   /// <exception cref="InvalidDataException">The program halts without an additional output.</exception>
-  public (int Where, int What) EvalToNextOutput()
+  public (int Where, long What) EvalToNextOutput()
   {
     if (Halted)
       throw new InvalidOperationException("The program has halted!");
@@ -167,7 +167,7 @@ public class ICProgram
 
     while (!Halted)
     {
-      int nextCode = GetUpcoming();
+      long nextCode = GetUpcoming();
       ICOpcode code = ICOpcode.Get(nextCode);
       if (code.ID == 3 && QueuedInputs.Count == 0) return true;
       Eval();
@@ -181,7 +181,7 @@ public class ICProgram
   /// </summary>
   /// <returns>The most recent output.</returns>
   /// <exception cref="InvalidOperationException">No outputs yet!</exception>
-  public (int Where, int What) GetLastOutput()
+  public (int Where, long What) GetLastOutput()
   {
     if (Outputs.Count == 0)
       throw new InvalidOperationException("No outputs yet!");
@@ -193,7 +193,7 @@ public class ICProgram
   ///   Add a single input to queue.
   /// </summary>
   /// <param name="input">The input.</param>
-  public void QueueInput(int input)
+  public void QueueInput(long input)
   {
     QueuedInputs.Add(input);
   }
@@ -202,17 +202,17 @@ public class ICProgram
   ///   Add multiple inputs to queue.
   /// </summary>
   /// <param name="inputs">The inputs.</param>
-  public void QueueInputs(IEnumerable<int> inputs)
+  public void QueueInputs(IEnumerable<long> inputs)
   {
     QueuedInputs.AddRange(inputs);
   }
 
   // Returns the next queued input, or gets one from console if nothing queued.
-  internal int GetInput(int pos)
+  internal long GetInput(int pos)
   {
     if (QueuedInputs.Count > 0)
     {
-      int value = QueuedInputs[0];
+      long value = QueuedInputs[0];
       QueuedInputs.RemoveAt(0);
       return value;
     }
@@ -222,7 +222,7 @@ public class ICProgram
     while (input == "")
     {
       input = Console.ReadLine();
-      if (int.TryParse(input, out int value))
+      if (long.TryParse(input, out long value))
       {
         return value;
       }
@@ -251,7 +251,7 @@ public class ICProgram
   /// <summary>
   ///   Gets a read-only list of outputs.
   /// </summary>
-  public IReadOnlyCollection<(int Where, int What)> GetOutputs()
+  public IReadOnlyCollection<(int Where, long What)> GetOutputs()
   {
     return Outputs.AsReadOnly();
   }
