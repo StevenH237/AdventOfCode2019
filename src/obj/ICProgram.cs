@@ -1,10 +1,12 @@
+using Nixill.Collections;
+
 public class ICProgram
 {
   // State of memory, readable and writable through this[int].
-  List<long> Memory;
+  DictionaryGenerator<int, long> Memory;
 
   // Initial state of memory, not readable except by resetting.
-  List<long> OrigMemory;
+  Dictionary<int, long> OrigMemory;
 
   // List of outputs (with addresses)
   internal List<(int Where, long What)> Outputs = new();
@@ -21,6 +23,11 @@ public class ICProgram
   /// The current instruction pointer location.
   /// </summary>
   public int Pointer { get; internal set; } = 0;
+
+  /// <summary>
+  /// The current relative memory value.
+  /// </summary>
+  public int RelativeBase { get; internal set; } = 0;
 
   /// <summary>
   /// Whether or not the program has halted. If so, Eval() and EvalAll()
@@ -45,8 +52,8 @@ public class ICProgram
   /// <param name="input">The initial memory.</param>
   public ICProgram(IEnumerable<long> input, bool debug = false)
   {
-    OrigMemory = new(input);
-    Memory = new(OrigMemory);
+    OrigMemory = new Dictionary<int, long>(input.Select((x, i) => new KeyValuePair<int, long>(i, x)));
+    Memory = new DictionaryGenerator<int, long>(new Dictionary<int, long>(OrigMemory), new DefaultGenerator<int, long>());
     Debug = debug;
   }
 
@@ -54,12 +61,7 @@ public class ICProgram
   /// Creates a new program with text input.
   /// </summary>
   /// <param name="input">The initial memory (as text).</param>
-  public ICProgram(string input, bool debug = false)
-  {
-    OrigMemory = new(input.Split(",").Select(long.Parse));
-    Memory = new(OrigMemory);
-    Debug = debug;
-  }
+  public ICProgram(string input, bool debug = false) : this(input.Split(",").Select(long.Parse), debug) { }
 
   /// <summary>
   ///   Gets the number at the position indicated by the Pointer, then
@@ -241,7 +243,7 @@ public class ICProgram
   /// </summary>
   public void Reset()
   {
-    Memory = new(OrigMemory);
+    Memory = new DictionaryGenerator<int, long>(new Dictionary<int, long>(OrigMemory), new DefaultGenerator<int, long>());
     Pointer = 0;
     Halted = false;
     Outputs = new();

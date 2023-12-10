@@ -108,6 +108,13 @@ public class ICOpcode
 
       call.Debug($"{left} == {right} → {left == right} (→ {target})");
       call.Program[target] = (left == right) ? 1 : 0;
+    }),
+    [9] = new ICOpcode(9, "RBA", (call) =>
+    {
+      int changeBy = (int)call.GetParameter();
+
+      call.Debug($"Change by {changeBy}.");
+      call.Program.RelativeBase += (int)changeBy;
     })
   };
 }
@@ -151,6 +158,9 @@ public class ICOpcodeCall
         break;
       case 1:
         break;
+      case 2:
+        nextValue = Program[(int)nextValue + Program.RelativeBase];
+        break;
       default:
         throw new InvalidOperationException($"Unknown parameter mode {mode}.");
     }
@@ -166,6 +176,8 @@ public class ICOpcodeCall
     {
       case 0:
         return (int)Program.GetNext();
+      case 2:
+        return (int)Program.GetNext() + Program.RelativeBase;
       default:
         throw new InvalidOperationException($"Attempted to get an address in non-address parameter mode.");
     }
