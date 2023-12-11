@@ -248,6 +248,7 @@ public class ICProgram
     Halted = false;
     Outputs = new();
     QueuedInputs = new();
+    RelativeBase = 0;
   }
 
   /// <summary>
