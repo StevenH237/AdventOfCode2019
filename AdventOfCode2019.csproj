@@ -7,7 +7,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Nixill" Version="0.9.4" />
+    <PackageReference Include="Nixill" Version="0.10.0" />
   </ItemGroup>
 
 </Project>
