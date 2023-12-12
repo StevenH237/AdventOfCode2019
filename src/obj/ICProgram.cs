@@ -36,6 +36,13 @@ public class ICProgram
   public bool Halted { get; internal set; } = false;
 
   /// <summary>
+  /// The last output of the computer. If nothing, throws an exception.
+  /// </summary>
+  public long LastOutput => Outputs.Last().What;
+
+  public IEnumerable<long> AllOutput => Outputs.Select(x => x.What);
+
+  /// <summary>
   /// Get the value of an index in program memory
   /// </summary>
   /// <param name="index">The index to retrieve</param>

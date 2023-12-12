@@ -36,8 +36,6 @@ public static class Program
       return;
     }
 
-    Console.WriteLine(Directory.GetCurrentDirectory());
-
     if (!Directory.Exists($"./data/day{which}"))
     {
       Console.WriteLine("This day's data directory doesn't exist!");
