@@ -4,60 +4,68 @@ public static class Day11
 {
   public static bool SkipTests = true;
 
-  static D11XY Position = (0, 0);
-  static D11XY Facing = (0, -1);
+  static DictionaryGenerator<D11XY, bool> PaintedTiles1 = new();
+  static DictionaryGenerator<D11XY, bool> PaintedTiles2 = new() { [(0, 0)] = true };
 
-  static DictionaryGenerator<D11XY, bool> PaintedTiles = new();
-
-  public static string Part1(string fname, StreamReader input)
+  public static string Paint(ICProgram prog, DictionaryGenerator<D11XY, bool> painting)
   {
-    ICProgram prog = new(input.ReadToEnd());
+    D11XY position = (0, 0);
+    D11XY facing = (0, -1);
 
     while (!prog.Halted)
     {
       // Input the color underneath the robot.
-      prog.QueueInput(PaintedTiles[Position] ? 1 : 0);
+      prog.QueueInput(painting[position] ? 1 : 0);
 
       // Now get the next output...
       // 1. Paint the panel underneath the robot using the first output.
       // 0 for black (false), 1 for white (true).
       (int _, long val) = prog.EvalToNextOutput();
-      PaintedTiles[Position] = (val == 1);
+      painting[position] = (val == 1);
 
       // Get another output...
       // 2. Turn using the second output.
       // 0 for left, 1 for right.
       (_, val) = prog.EvalToNextOutput();
-      Facing = val switch
+      facing = val switch
       {
-        0 => Facing.Left,
-        1 => Facing.Right,
-        _ => Facing
+        0 => facing.Left,
+        1 => facing.Right,
+        _ => facing
       };
 
       // 3. Move forward.
-      Position += Facing;
+      position += facing;
 
       // And loop back to next input
       prog.EvalToNextInput();
     }
 
     // Finally, output the number of tiles that were ever painted.
-    return PaintedTiles.Count.ToString();
+    return painting.Count.ToString();
+  }
+
+  public static string Part1(string fname, StreamReader input)
+  {
+    ICProgram prog = new(input.ReadToEnd());
+    return Paint(prog, PaintedTiles1);
   }
 
   // This was written before I submitted part 1! AoC seems to have at
   // least one of these per year so now... wait wasn't day 6 this as well?
   // Oh well, I'm gonna guess it's happening again.
-  //
-  // Judging by the output when I ran it, I'm guessing I had it wrong. But
-  // it's still written here in this commit as my official guess anyway.
+
+  // I was so close to getting it right. But I need to run the entire
+  // program again. :)
   public static string Part2(string fname, StreamReader input)
   {
-    int top = PaintedTiles.Min(p => p.Key.Y);
-    int left = PaintedTiles.Min(p => p.Key.X);
-    int right = PaintedTiles.Max(p => p.Key.X);
-    int bottom = PaintedTiles.Max(p => p.Key.Y);
+    ICProgram prog = new(input.ReadToEnd());
+    Paint(prog, PaintedTiles2);
+
+    int top = PaintedTiles2.Min(p => p.Key.Y);
+    int left = PaintedTiles2.Min(p => p.Key.X);
+    int right = PaintedTiles2.Max(p => p.Key.X);
+    int bottom = PaintedTiles2.Max(p => p.Key.Y);
 
     Console.WriteLine();
 
@@ -65,7 +73,7 @@ public static class Day11
     {
       for (int x = left; x < right + 1; x++)
       {
-        Console.Write(PaintedTiles[(x, y)] ? '█' : ' ');
+        Console.Write(PaintedTiles2[(x, y)] ? '█' : ' ');
       }
       Console.WriteLine();
     }
